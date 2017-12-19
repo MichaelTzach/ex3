@@ -1,0 +1,104 @@
+---
+title: "q1"
+author: "Simon, Alaa and Michael"
+date: "12/17/2017"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Prep
+
+Setting up the env and installing needed packages
+```{r}
+workspaceDir = "/Users/michaeltzach/Developer/ex3/Q1"
+knitr::opts_knit$set(root.dir = workspaceDir)
+
+if(!require(igraph)) {
+  install.packages('igraph')
+}
+library(igraph)
+```
+
+Create helper functions
+```{r}
+
+colorDataGraphVerticesForGender = function(dataGraph) {
+  V(dataGraph)$color = 'white'
+  
+  femaleVerticeIndexes = which(V(dataGraph)$gender=="F")
+  V(dataGraph)[femaleVerticeIndexes]$color = "pink"
+  
+  maleVerticeIndexes = which(V(dataGraph)$gender=="M")
+  V(dataGraph)[maleVerticeIndexes]$color = 'gray'
+  
+  return(dataGraph)
+}
+```
+
+Load data
+```{r}
+edgelist = read.csv('ga_edgelist.csv', header=TRUE)
+actorlist = read.csv('ga_actors.csv', header=TRUE)
+```
+
+# Grey's Anatomy networks
+## Biggest component in graph
+create a graph where the actors are the vertices and the edgelist (connections) are the edges
+```{r}
+dataGraph = graph.data.frame(edgelist, directed=FALSE, vertices=actorlist)
+dataGraph = colorDataGraphVerticesForGender(dataGraph)
+```
+
+Plot the graph to get the basic connections between the characters
+```{r}
+plot(dataGraph)
+```
+
+Create graph that includes only the biggest component
+```{r}
+dataGraphComponents = components(dataGraph)
+dataGraphComponentSizes = dataGraphComponents$csize
+dataGraphComponentMemberships = dataGraphComponents$membership
+
+biggestComponentSizeIndex = which.max(dataGraphComponentSizes)
+biggestComponentVerticeIndexes = which(dataGraphComponentMemberships==biggestComponentSizeIndex)
+biggestComponentVertices = V(dataGraph)[biggestComponentVerticeIndexes]
+
+biggestComponentDataGraph = induced.subgraph(graph=dataGraph, v=biggestComponentVertices)
+biggestComponentDataGraph = colorDataGraphVerticesForGender(biggestComponentDataGraph)
+```
+
+Plot the subgraph of the biggest component
+```{r}
+plot(biggestComponentDataGraph)
+```
+
+## a.i. Checking for betweenness
+Find the highest betweenness vertice
+```{r}
+betweenness = betweenness(biggestComponentDataGraph)
+print(betweenness[which.max(betweenness)])
+```
+Sloan has the highes betweenness
+
+## a.ii. Checking for closeness
+Find the highest closeness vertice
+```{r}
+closeness <- closeness(biggestComponentDataGraph)
+print(closeness[which.max(closeness)])
+```
+Torres has the highest closenesseigen_centrality
+
+## a.iii. Checking for Eigenvector
+Find the highest Eigenvector value vertice
+```{r}
+eigenvector = spectrum(biggestComponentDataGraph)$vectors
+eigenvectorMaxCharacter = V(biggestComponentDataGraph)[which.max(eigenvector)]
+eigenvectorMaxValue = eigenvector[which.max(eigenvector)]
+print(paste("character:", eigenvectorMaxCharacter[[1]]$name, "| vector value:", eigenvectorMaxValue))
+```
+Colin has the highest Eigen vector value
+
