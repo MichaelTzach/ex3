@@ -1,5 +1,5 @@
 ---
-title: "q1"
+title: "Q1"
 author: "Simon, Alaa and Michael"
 date: "12/17/2017"
 output: html_document
@@ -20,6 +20,7 @@ if(!require(igraph)) {
   install.packages('igraph')
 }
 library(igraph)
+set.seed(86)
 ```
 
 Create helper functions
@@ -102,3 +103,62 @@ print(paste("character:", eigenvectorMaxCharacter[[1]]$name, "| vector value:", 
 ```
 Colin has the highest Eigen vector value
 
+## b. Louvain clustering
+The first algorithm that we are going to use is Louvain clustering.
+We will work on the data graph that we created at the beginning.
+
+### [From the documentation of the algorithm:](http://igraph.org/r/doc/cluster_louvain.html)
+**_"This function implements the multi-level modularity optimization algorithm for finding community structure. It is based on the modularity measure and a hierarchial approach.."_**
+
+We will first create the cluster and then understand which character is in which grouping (what is the membership of each character)
+```{r}
+louvainCluster = cluster_louvain(dataGraph)
+louvainClusterCharacterMembership = membership(louvainCluster)
+```
+
+We plot the original graph but now we paint the vertices to match the membership of the characters to the groupings in the louvain cluster
+```{r}
+plot(dataGraph, vertex.color = louvainClusterCharacterMembership)
+```
+
+Number of the communities created in the cluster
+```{r}
+louvainClusterNumberOfCommunities = length(louvainCluster)
+print(paste("louvain cluster number of communities: ", louvainClusterNumberOfCommunities))
+```
+
+We get a modularity of 0.5947232
+```{r}
+louvainClusterModularity = modularity(louvainCluster)
+print(paste("louvain cluster modularity: ", louvainClusterModularity))
+```
+
+## b. Walk trap clustering
+The second algorithm that we are going to use is Walktrap clustering.
+We will work on the data graph that we created at the beginning.
+
+### [From the documentation of the algorithm:](http://igraph.org/r/doc/cluster_walktrap.html)
+**_"This function tries to find densely connected subgraphs, also called communities in a graph via random walks. The idea is that short random walks tend to stay in the same community."_**
+
+We will first create the cluster and then understand which character is in which grouping (what is the membership of each character)
+```{r}
+walktrapCluster = cluster_walktrap(dataGraph)
+walktrapClusterCharacterMembership = membership(walktrapCluster)
+```
+
+We plot the original graph but now we paint the vertices to match the membership of the characters to the groupings in the walktrap cluster
+```{r}
+plot(dataGraph, vertex.color = walktrapClusterCharacterMembership)
+```
+
+Number of the communities created in the cluster
+```{r}
+walktrapClusterNumberOfCommunities = length(walktrapCluster)
+print(paste("walktrap cluster number of communities: ", walktrapClusterNumberOfCommunities))
+```
+
+We get a modularity of 0.514705896377563
+```{r}
+walktrapClusterModularity = modularity(walktrapCluster)
+print(paste("walktrap cluster modularity: ", walktrapClusterModularity))
+```
