@@ -60,10 +60,10 @@ for (follower in friendsList) {
             g = add.edges(g, c(follower, name))
         }
         i = i + 1
-    }
-    if (i == 15) {
-        Sys.sleep(60 * 15.1) # sleep 15.1 min every 15 requests (API constraint :/)
-        i = 0
+        if (i == 15) {
+            Sys.sleep(60 * 15.1) # sleep 15.1 min every 15 requests (API constraint :/)
+            i = 0
+        }
     }
 }
 ```
