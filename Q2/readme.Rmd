@@ -11,7 +11,7 @@ knitr::opts_chunk$set(echo = TRUE)
 
 ## Question 2
 
-### Using Twitter API to get the followers of Ben-Gurion University account ([@bengurionu](https://twitter.com/bengurionu?lang=en))
+### Using Twitter API to get the network of Dunald Trump friends ([@realDonaldTrump](https://twitter.com/realDonaldTrump))
 
 Loading relevant packages: 
 ```{r results='hide', message=FALSE, warning=FALSE}
@@ -79,8 +79,5 @@ tkplot(g, layout = layout.kamada.kawai)
 
 
 
-# g = add.edges(g, c("RealRomaDowney", "TrumpGolf"))
-# g = add.edges(g, c("JesseBWatters", "AnnCoulter"))
-# tkplot(g, layout = layout.kamada.kawai)
 
 
