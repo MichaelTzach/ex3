@@ -1,0 +1,86 @@
+---
+title: "q2"
+author: "Simon, Alaa and Michael"
+date: "December 20, 2017"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Question 2
+
+### Using Twitter API to get the followers of Ben-Gurion University account ([@bengurionu](https://twitter.com/bengurionu?lang=en))
+
+Loading relevant packages: 
+```{r results='hide', message=FALSE, warning=FALSE}
+library(twitteR)
+library(jsonlite)
+library(httr)
+```
+
+Setting up the OAuth credentials:
+```{r}
+source("twitterOAuth.R")
+myapp = oauth_app("twitter", key=consumer_key, secret=consumer_secret)
+sign = sign_oauth1.0(myapp, token=access_token, token_secret=access_secret)
+```
+
+Now let's get a list of Donald Trump friends (accounts he follows):
+```{r}
+url = "https://api.twitter.com/1.1/friends/list.json?cursor=-1&screen_name=realDonaldTrump&count=50"
+presidentFriends = GET(url, sign)
+json = jsonlite::fromJSON(jsonlite::toJSON(httr::content(presidentFriends)))
+friendsList = json$users$screen_name
+length(friendsList)
+head(friendsList)
+```
+
+Create a new directed graph with the president's friends names as vertices:
+```{r}
+library(igraph)
+g <- make_empty_graph(n = 0, directed = TRUE)
+g <- add.vertices(g, length(friendsList))
+V(g)$name = friendsList
+plot(g)
+```
+
+
+Now let's add edges. An edge v1 -> v2 means that v1 is following v2 on Twitter:
+```{r}
+i = 0
+url = "https://api.twitter.com/1.1/friendships/show.json?source_screen_name="
+for (follower in friendsList) {
+    for (name in setdiff(friendsList, c(follower))) {
+        fullURL = paste(follower, "&target_screen_name=", name, sep = "")
+        res = GET(fullURL, sign)
+        json = jsonlite::fromJSON(jsonlite::toJSON(httr::content(res)))
+        if (json$relationship$source$following) {
+            g = add.edges(g, c(follower, name))
+        }
+        i = i + 1
+    }
+    if (i == 15) {
+        Sys.sleep(60 * 15.1) # sleep 15.1 min every 15 requests (API constraint :/)
+        i = 0
+    }
+}
+```
+
+Plot g:
+```{r}
+plot(g)
+tkplot(g, layout = layout.kamada.kawai)
+```
+
+
+
+
+
+
+# g = add.edges(g, c("RealRomaDowney", "TrumpGolf"))
+# g = add.edges(g, c("JesseBWatters", "AnnCoulter"))
+# tkplot(g, layout = layout.kamada.kawai)
+
+
