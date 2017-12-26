@@ -6,6 +6,7 @@ if(!require(igraph)) {
   install.packages('igraph')
 }
 library(igraph)
+set.seed(86)
 
 #load files
 edgelist = read.csv('ga_edgelist.csv')
@@ -55,3 +56,28 @@ eigenvector = spectrum(biggestComponentDataGraph)$vectors
 eigenvectorMaxCharacter = V(biggestComponentDataGraph)[which.max(eigenvector)]
 eigenvectorMaxValue = eigenvector[which.max(eigenvector)]
 print(paste("character:", eigenvectorMaxCharacter[[1]]$name, "| vector value:", eigenvectorMaxValue))
+
+#Louvain - http://igraph.org/r/doc/cluster_louvain.html
+louvainCluster = cluster_louvain(dataGraph)
+louvainClusterCharacterMembership = membership(louvainCluster)
+
+plot(dataGraph, vertex.color = louvainClusterCharacterMembership)
+
+louvainClusterNumberOfCommunities = length(louvainCluster)
+print(paste("louvain cluster number of communities: ", louvainClusterNumberOfCommunities))
+
+louvainClusterModularity = modularity(louvainCluster)
+print(paste("louvain cluster modularity: ", louvainClusterModularity))
+
+#walk trap - http://igraph.org/r/doc/cluster_walktrap.html
+walktrapCluster = cluster_walktrap(dataGraph)
+walktrapClusterCharacterMembership = membership(walktrapCluster)
+
+plot(dataGraph, vertex.color = walktrapClusterCharacterMembership)
+
+walktrapClusterNumberOfCommunities = length(walktrapCluster)
+print(paste("walktrap cluster number of communities: ", walktrapClusterNumberOfCommunities))
+
+walktrapClusterModularity = modularity(walktrapCluster)
+print(paste("walktrap cluster modularity: ", walktrapClusterModularity))
+
