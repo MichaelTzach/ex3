@@ -33,51 +33,168 @@ url = "https://api.twitter.com/1.1/friends/list.json?cursor=-1&screen_name=realD
 presidentFriends = GET(url, sign)
 json = jsonlite::fromJSON(jsonlite::toJSON(httr::content(presidentFriends)))
 friendsList = json$users$screen_name
+```
+
+```{r}
 length(friendsList)
 head(friendsList)
 ```
 
-Create a new directed graph with the president's friends names as vertices:
+Create a new undirected graph with the president's friends names as vertices, and an edge between to vertices means the two persons are following each other on Twitter: (Due to the Twitter API restriction, we are cutting the vertices to 30 names only)
 ```{r}
 library(igraph)
-g <- make_empty_graph(n = 0, directed = TRUE)
-g <- add.vertices(g, length(friendsList))
-V(g)$name = friendsList
+g <- make_empty_graph(n = 0, directed = FALSE) #New empty graph
+g <- add.vertices(g, 30) #Adding 30 vertices
+V(g)$name = friendsList[1: 30] #Adding names to the vertices
 plot(g)
 ```
 
 
-Now let's add edges. An edge v1 -> v2 means that v1 is following v2 on Twitter:
+Now let's get the edges. An edge between two vertices v1, v2 means that v1 and v2 following each other on Twitter:
+We are going to store the edges in data frame, so we could save the data frame at some point and restore it later.
+URL request example:
+https://api.twitter.com/1.1/friendships/show.json?source_screen_name=bert&target_screen_name=ernie
+
 ```{r}
-i = 0
+df = data.frame(V1="", V2="")
+i = 0 #To count the requests and postpone the process every 15 requests 
 url = "https://api.twitter.com/1.1/friendships/show.json?source_screen_name="
-for (follower in friendsList) {
-    for (name in setdiff(friendsList, c(follower))) {
-        fullURL = paste(follower, "&target_screen_name=", name, sep = "")
+idx = 2
+
+for (v1 in friendsList[1: 29]) {
+    for (v2 in friendsList[idx: 30]) {
+      
+        fullURL = paste(url, v1, "&target_screen_name=", v2, sep = "")
         res = GET(fullURL, sign)
         json = jsonlite::fromJSON(jsonlite::toJSON(httr::content(res)))
-        if (json$relationship$source$following) {
-            g = add.edges(g, c(follower, name))
+        
+        if (json$relationship$source$following && json$relationship$source$followed_by) {
+            df = rbind(df, data.frame(V1=v1, V2=v2))
         }
+        
         i = i + 1
         if (i == 15) {
-            Sys.sleep(60 * 15.1) # sleep 15.1 min every 15 requests (API constraint :/)
+            Sys.sleep(60 * 15.05) # sleep 15.1 min every 15 requests (API constraint :/)
             i = 0
         }
     }
+    idx = idx + 1
 }
 ```
 
-Plot g:
+Adding the edges to the graph:
 ```{r}
-plot(g)
+g = graph.data.frame(d=df, directed = FALSE)
 tkplot(g, layout = layout.kamada.kawai)
 ```
 
+Screen shot of the graph:
+![graph1](/images/graph1.png)
+
+## Answering question 1:
+
+### Biggest component in graph
+
+```{r}
+gComponents = components(g)
+gComponentSizes = gComponents$csize
+gComponentMemberships = gComponents$membership
+
+biggestComponentSizeIndex = which.max(gComponentSizes)
+biggestComponentVerticeIndexes = which(gComponentMemberships==biggestComponentSizeIndex)
+biggestComponentVertices = V(g)[biggestComponentVerticeIndexes]
+
+biggestComponentGraph = induced.subgraph(graph=g, v=biggestComponentVertices)
+
+biggestComponentGraph$layout <- layout.circle(biggestComponentGraph)
+plot(biggestComponentGraph, vertex.size=10)
+```
+
+Screen shot of the graph:
+![graph2](/images/graph2.png)
+
+### Betweenness:
+
+```{r}
+betweenness = betweenness(biggestComponentGraph)
+print(betweenness[which.max(betweenness)])
+```
+Result: seanhannity 85.59504
+
+### Closeness:
+
+```{r}
+closeness <- closeness(biggestComponentGraph)
+print(closeness[which.max(closeness)])
+```
+Result: seanhannity 0.02777778
+
+### Eigenvector:
+
+```{r}
+eigenvector = spectrum(biggestComponentGraph)$vectors
+eigenvectorMaxCharacter = V(biggestComponentGraph)[which.max(eigenvector)]
+eigenvectorMaxValue = eigenvector[which.max(eigenvector)]
+print(paste("Account:", eigenvectorMaxCharacter[[1]]$name, "| vector value:", eigenvectorMaxValue))
+```
+Result: Account: MarkBurnettTV | vector value: -0.00715679111493718
+
+### Louvain clustering:
+
+```{r}
+louvainCluster = cluster_louvain(g)
+louvainClusterCharacterMembership = membership(louvainCluster)
+```
+
+* Ploting the clusters:
+```{r}
+g$layout <- layout.circle(g)
+plot(g, vertex.size=10, vertex.color = louvainClusterCharacterMembership)
+```
+
+Screen shot of the graph:
+![graph3](/images/graph3.png)
 
 
+* Communities number:
+```{r}
+louvainClusterNumberOfCommunities = length(louvainCluster)
+print(paste("louvain cluster number of communities: ", louvainClusterNumberOfCommunities))
+```
+Result: louvain cluster number of communities:  4
 
+* Modularity:
+```{r}
+modularity = modularity(louvainCluster)
+print(paste("Modularity: ", modularity))
+```
+Result: Modularity:  0.211514182307887
 
+### Walk trap clustering
 
+```{r}
+walktrapCluster = cluster_walktrap(g)
+walktrapClusterCharacterMembership = membership(walktrapCluster)
+```
 
+* Ploting the clusters:
+```{r}
+plot(g, vertex.size=10, vertex.color = walktrapClusterCharacterMembership)
+```
 
+Screen shot of the graph:
+![graph4](/images/graph4.png)
+
+* Communities number:
+```{r}
+walktrapClusterNumberOfCommunities = length(walktrapCluster)
+print(paste("walktrap cluster number of communities: ", walktrapClusterNumberOfCommunities))
+```
+Result: walktrap cluster number of communities:  10
+
+* Modularity:
+```{r}
+modularity = modularity(walktrapCluster)
+print(paste("Modularity: ", modularity))
+```
+Result: Modularity:  0.114594727754593
