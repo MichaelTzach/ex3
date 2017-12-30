@@ -89,7 +89,7 @@ tkplot(g, layout = layout.kamada.kawai)
 ```
 
 Screen shot of the graph:
-![graph1](/images/graph1.png)
+![graph1](./images/graph1.PNG)
 
 ## Answering question 1:
 
@@ -111,7 +111,7 @@ plot(biggestComponentGraph, vertex.size=10)
 ```
 
 Screen shot of the graph:
-![graph2](/images/graph2.png)
+![graph2](./images/graph2.PNG)
 
 ### Betweenness:
 
@@ -153,7 +153,7 @@ plot(g, vertex.size=10, vertex.color = louvainClusterCharacterMembership)
 ```
 
 Screen shot of the graph:
-![graph3](/images/graph3.png)
+![graph3](./images/graph3.PNG)
 
 
 * Communities number:
@@ -183,7 +183,7 @@ plot(g, vertex.size=10, vertex.color = walktrapClusterCharacterMembership)
 ```
 
 Screen shot of the graph:
-![graph4](/images/graph4.png)
+![graph4](./images/graph4.PNG)
 
 * Communities number:
 ```{r}
